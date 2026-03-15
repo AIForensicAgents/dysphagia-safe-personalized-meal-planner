@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dysphagia-Safe Personalized Meal Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        warm: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                        },
+                        calm: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .pulse-glow { animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); } 50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); } }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input, select, textarea, button { font-size: 16px !important; }
+        .tab-active { border-bottom: 3px solid #16a34a; color: #166534; font-weight: 600; }
+        .card-shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06); }
+        .recipe-card:active { transform: scale(0.98); transition: transform 0.1s; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .loading-dots::after { content: ''; animation: dots 1.5s steps(4) infinite; }
+        @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+        .nutrient-bar { transition: width 0.8s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app" class="max-w-lg mx-auto pb-24">
+        <!-- Header -->
+        <header class="bg-white sticky top-0 z-50 border-b border-gray-100 card-shadow">
+            <div class="px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🍽️</span>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-800 leading-tight">DysphaSafe</h1>
+                        <p class="text-xs text-gray-500">Personalized Meal Planner</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="showView('clinician')" class="p-2 rounded-full hover:bg-gray-100 transition" title="Clinician Report">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </button>
+                    <button onclick="showView('settings')" class="p-2 rounded-full hover:bg-gray-100 transition" title="Settings">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Onboarding View -->
+        <div id="view-onboarding" class="view px-4 py-6 fade-in">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-3">👋</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome!</h2>
+                <p class="text-gray-600 text-base leading-relaxed">Let's set up a safe, delicious meal plan tailored to your needs. This takes about 2 minutes.</p>
+            </div>
+
+            <div class="space-y-5">
+                <!-- Name -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">👤 Name</label>
+                    <input type="text" id="inp-name" placeholder="e.g., Margaret" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800">
+                </div>
+
+                <!-- Age -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">🎂 Age</label>
+                    <input type="number" id="inp-age" placeholder="e.g., 78" min="50" max="120" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800">
+                </div>
+
+                <!-- Weight -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">⚖️ Weight (lbs)</label>
+                    <input type="number" id="inp-weight" placeholder="e.g., 140" min="60" max="400" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800">
+                </div>
+
+                <!-- Dysphagia Level -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">🔬 Dysphagia Texture Level (IDDSI)</label>
+                    <select id="inp-iddsi" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800 bg-white">
+                        <option value="">Select texture level...</option>
+                        <option value="3">Level 3 – Liquidised (smooth, no lumps)</option>
+                        <option value="4">Level 4 – Puréed (smooth, no lumps)</option>
+                        <option value="5">Level 5 – Minced & Moist (small pieces)</option>
+                        <option value="6">Level 6 – Soft & Bite-Sized</option>
+                        <option value="7">Level 7 – Regular / Easy to Chew</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Ask your speech-language pathologist if unsure</p>
+                </div>
+
+                <!-- Fluid Thickness -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">🥤 Fluid Thickness Level</label>
+                    <select id="inp-fluid" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800 bg-white">
+                        <option value="">Select thickness...</option>
+                        <option value="0">Thin (regular liquids)</option>
+                        <option value="1">Slightly Thick</option>
+                        <option value="2">Mildly Thick</option>
+                        <option value="3">Moderately Thick</option>
+                        <option value="4">Extremely Thick</option>
+                    </select>
+                </div>
+
+                <!-- Dentition -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">🦷 Dentition Status</label>
+                    <select id="inp-dentition" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800 bg-white">
+                        <option value="">Select...</option>
+                        <option value="natural">Natural teeth (good condition)</option>
+                        <option value="partial_denture">Partial dentures</option>
+                        <option value="full_denture">Full dentures</option>
+                        <option value="poor">Poor dentition / missing teeth</option>
+                        <option value="edentulous">No teeth (edentulous)</option>
+                    </select>
+                </div>
+
+                <!-- Cultural Preferences -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">🌍 Cultural Food Preferences</label>
+                    <select id="inp-culture" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800 bg-white">
+                        <option value="american">American / Western</option>
+                        <option value="mexican">Mexican / Latin American</option>
+                        <option value="italian">Italian / Mediterranean</option>
+                        <option value="chinese">Chinese</option>
+                        <option value="indian">Indian / South Asian</option>
+                        <option value="japanese">Japanese</option>
+                        <option value="korean">Korean</option>
+                        <option value="african">African</option>
+                        <option value="middle_eastern">Middle Eastern</option>
+                        <option value="caribbean">Caribbean</option>
+                        <option value="other">Other / Mixed</option>
+                    </select>
+                </div>
+
+                <!-- Allergies -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">⚠️ Allergies & Restrictions</label>
+                    <input type="text" id="inp-allergies" placeholder="e.g., dairy, gluten, shellfish (or 'none')" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800">
+                </div>
+
+                <!-- Kitchen Equipment -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">🍳 Available Kitchen Equipment</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-brand-300 transition">
+                            <input type="checkbox" value="blender" class="equip-check w-5 h-5 text-brand-500 rounded"> <span class="text-sm">Blender</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-brand-300 transition">
+                            <input type="checkbox" value="food_processor" class="equip-check w-5 h-5 text-brand-500 rounded"> <span class="text-sm">Food Processor</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-brand-300 transition">
+                            <input type="checkbox" value="immersion_blender" class="equip-check w-5 h-5 text-brand-500 rounded"> <span class="text-sm">Immersion Blender</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-brand-300 transition">
+                            <input type="checkbox" value="slow_cooker" class="equip-check w-5 h-5 text-brand-500 rounded"> <span class="text-sm">Slow Cooker</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-brand-300 transition">
+                            <input type="checkbox" value="microwave" class="equip-check w-5 h-5 text-brand-500 rounded"> <span class="text-sm">Microwave</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-brand-300 transition">
+                            <input type="checkbox" value="stovetop" class="equip-check w-5 h-5 text-brand-500 rounded"> <span class="text-sm">Stovetop</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Calorie Goal -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">🔥 Daily Calorie Goal</label>
+                    <input type="number" id="inp-calories" placeholder="e.g., 1800 (leave blank for auto)" min="1000" max="3500" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800">
+                    <p class="text-xs text-gray-500 mt-1">We'll estimate if left blank</p>
+                </div>
+
+                <!-- Special Nutrition Needs -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">💊 Special Nutrition Needs</label>
+                    <input type="text" id="inp-nutrition-needs" placeholder="e.g., high protein, low sodium, diabetic-friendly" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-800">
+                </div>
+
+                <button onclick="saveProfile()" class="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-lg rounded-xl transition pulse-glow mt-4 active:scale-95">
+                    ✅ Save Profile & Get Started
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard View -->
+        <div id="view-dashboard" class="view hidden px-4 py-4 fade-in">
+            <!-- User greeting -->
+            <div class="bg-gradient-to-r from-brand-50 to-warm-50 rounded-2xl p-4 mb-4 border border-brand-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800">Hello, <span id="dash-name">Friend</span>! 😊</h2>
+                        <p class="text-sm text-gray-600">IDDSI Level <span id="dash-level">-</span> • <span id="dash-cal">-</span> kcal/day</p>
+                    </div>
+                    <button onclick="showView('onboarding')" class="text-xs text-brand-600 underline">Edit</button>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <button onclick="generateMealPlan()" class="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl p-4 text-left transition active:scale-95 card-shadow">
+                    <div class="text-2xl mb-1">🍽️</div>
+                    <div class="font-bold text-sm">Generate Meal Plan</div>
+                    <div class="text-xs opacity-80 mt-0.5">Full day, personalized</div>
+                </button>
+                <button onclick="generateSingleRecipe()" class="bg-calm-500 hover:bg-calm-600 text-white rounded-2xl p-4 text-left transition active:scale-95 card-shadow">
+                    <div class="text-2xl mb-1">📝</div>
+                    <div class="font-bold text-sm">Single Recipe</div>
+                    <div class="text-xs opacity-80 mt-0.5">Quick meal idea</div>
+                </button>
+                <button onclick="showView('grocery')" class="bg-warm-400 hover:bg-warm-500 text-white rounded-2xl p-4 text-left transition active:scale-95 card-shadow">
+                    <div class="text-2xl mb-1">🛒</div>
+                    <div class="font-bold text-sm">Grocery List</div>
+                    <div class="text-xs opacity-80 mt-0.5">From saved meals</div>
+                </button>
+                <button onclick="showView('history')" class="bg-purple-500 hover:bg-purple-600 text-white rounded-2xl p-4 text-left transition active:scale-95 card-shadow">
+                    <div class="text-2xl mb-1">📚</div>
+                    <div class="font-bold text-sm">Saved Meals</div>
+                    <div class="text-xs opacity-80 mt-0.5">View & rate</div>
+                </button>
+            </div>
+
+            <!-- Today's Nutrition Summary -->
+            <div id="nutrition-summary" class="bg-white rounded-2xl p-4 card-shadow mb-4">
+                <h3 class="font-bold text-gray-800 mb-3">📊 Today's Nutrition</h3>
+                <div id="nutrition-bars" class="space-y-2">
+                    <p class="text-sm text-gray-500 italic">Generate a meal plan to see your daily nutrition breakdown</p>
+                </div>
+            </div>
+
+            <!-- Recent/Current Meal Plan -->
+            <div id="current-plan-section" class="hidden">
+                <h3 class="font-bold text-gray-800 mb-3">🍴 Today's Meal Plan</h3>
+                <div id="current-plan-cards" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Meal Plan View -->
+        <div id="view-mealplan" class="view hidden px-4 py-4 fade-in">
+            <button onclick="showView('dashboard')" class="flex items-center gap-1 text-brand-600 font-medium mb-4 py-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Back
+            </button>
+            <div id="mealplan-content"></div>
+        </div>
+
+        <!-- Recipe Detail View -->
+        <div id="view-recipe" class="view hidden px-4 py-4 fade-in">
+            <button onclick="goBackFromRecipe()" class="flex items-center gap-1 text-brand-600 font-medium mb-4 py-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Back
+            </button>
+            <div id="recipe-content"></div>
+        </div>
+
+        <!-- Grocery List View -->
+        <div id="view-grocery" class="view hidden px-4 py-4 fade-in">
+            <button onclick="showView('dashboard')" class="flex items-center gap-1 text-brand-600 font-medium mb-4 py-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Back
+            </button>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">🛒 Grocery List</h2>
+            <div id="grocery-content">
+                <p class="text-gray-500 italic">Generate a meal plan first to create a grocery list</p>
+            </div>
+        </div>
+
+        <!-- History View -->
+        <div id="view-history" class="view hidden px-4 py-4 fade-in">
+            <button onclick="showView('dashboard')" class="flex items-center gap-1 text-brand-600 font-medium mb-4 py-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Back
+            </button>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📚 Saved Meal Plans</h2>
+            <div id="history-content"></div>
+        </div>
+
+        <!-- Clinician Report View -->
+        <div id="view-clinician" class="view hidden px-4 py-4 fade-in">
+            <button onclick="showView('dashboard')" class="flex items-center gap-1 text-brand-600 font-medium mb-4 py-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Back
+            </button>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">📋 Clinician Report</h2>
+            <p class="text-sm text-gray-500 mb-4">Share this with your speech-language pathologist or dietitian</p>
+            <div id="clinician-content"></div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="view-settings" class="view hidden px-4 py-4 fade-in">
+            <button onclick="showView('dashboard')" class="flex items-center gap-1 text-brand-600 font-medium mb-4 py-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Back
+            </button>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">⚙️ Settings</h2>
+            <div class="space-y-4">
+                <button onclick="showView('onboarding')" class="w-full p-4 bg-white rounded-xl card-shadow text-left flex items-center justify-between">
+                    <span class="font-medium text-gray-800">✏️ Edit Profile</span>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <button onclick="clearAllData()" class="w-full p-4 bg-white rounded-xl card-shadow text-left flex items-center justify-between">
+                    <span class="font-medium text-red-600">🗑️ Clear All Data</span>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <div class="bg-white rounded-xl card-shadow p-4">
+                    <h3 class="font-medium text-gray-800 mb-2">ℹ️ About</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">DysphaSafe generates personalized texture-modified recipes meeting caloric and micronutrient needs based on IDDSI guidelines. Always consult your healthcare provider before making dietary changes.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+            <div class="bg-white rounded-2xl p-6 mx-6 max-w-sm w-full text-center card-shadow">
+                <div class="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full spin mx-auto mb-4"></div>
+                <h3 class="font-bold text-gray-800 text-lg mb-1" id="loading-title">Creating Your Plan</h3>
+                <p class="text-sm text-gray-500" id="loading-message">Our AI nutritionist is crafting safe, delicious meals<span class="loading-dots"></span></p>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" class="hidden fixed bottom-20 left-4 right-4 max-w-lg mx-auto bg-gray-800 text-white px-4 py-3 rounded-xl text-sm text-center z-50 fade-in"></div>
+    </div>
+
+    <script>
+        // Global AI tracking variables
+        let totalAIInputTokens = 0;
+        let totalAIOutputTokens = 0;
+        let totalAITime = 0;
+        const aliasTimings = {};
+        let lastViewBeforeRecipe = 'mealplan';
+
+        const API_BASE = 'https://16504442930.work';
+
+        // ---- Utility Functions ----
+        function showView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            const view = document.getElementById(`view-${viewName}`);
+            if (view) {
+                view.classList.remove('hidden');
+                view.classList.add('fade-in');
+            }
+            if (viewName === 'dashboard') updateDashboard();
+            if (viewName === 'history') renderHistory();
+            if (viewName === 'clinician') renderClinicianReport();
+            if (viewName === 'grocery') renderGroceryList();
+            if (viewName === 'onboarding') populateOnboarding();
+        }
+
+        function showLoading(title, message) {
+            document.getElementById('loading-title').textContent = title || 'Working...';
+            document.getElementById('loading-message').innerHTML = (message || 'Please wait') + '<span class="loading-dots"></span>';
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        function showToast(msg, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), duration);
+        }
+
+        function getProfile() {
+            return JSON.parse(localStorage.getItem('dyspha_profile') || 'null');
+        }
+
+        function getMealPlans() {
+            return JSON.parse(localStorage.getItem('dyspha_plans') || '[]');
+        }
+
+        function saveMealPlans(plans) {
+            localStorage.setItem('dyspha_plans', JSON.stringify(plans));
+        }
+
+        function getRatings() {
+            return JSON.parse(localStorage.getItem('dyspha_ratings') || '{}');
+        }
+
+        function saveRating(recipeId, rating) {
+            const ratings = getRatings();
+            ratings[recipeId] = rating;
+            localStorage.setItem('dyspha_ratings', JSON.stringify(ratings));
+        }
+
+        function getIDDSILabel(level) {
+            const labels = {
+                '3': 'Liquidised',
+                '4': 'Puréed',
+                '5': 'Minced & Moist',
+                '6': 'Soft & Bite-Sized',
+                '7': 'Regular / Easy to Chew'
+            };
+            return labels[level] || level;
+        }
+
+        function getFluidLabel(level) {
+            const labels = {
+                '0': 'Thin',
+                '1': 'Slightly Thick',
+                '2': 'Mildly Thick',
+                '3': 'Moderately Thick',
+                '4': 'Extremely Thick'
+            };
+            return labels[level] || level;
+        }
+
+        // ---- AI Call Function ----
+        async function callAI(prompt, alias = 'genericAI', retries = 3) {
+            const start = Date.now();
+            for (let attempt = 0; attempt < retries; attempt++) {
+                try {
+                    const res = await fetch(`${API_BASE}/run_prompt`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            alias: alias,
+                            params: { prompt: prompt }
+                        })
+                    });
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        if (attempt === retries - 1) {
+                            // Format error with AI
+                            try {
+                                const errRes = await fetch(`${API_BASE}/run_prompt`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        alias: 'genericAI',
+                                        params: { prompt: `Reformat this API error message to be user-friendly and empower the user to fix the issue. Include the full response. Error: ${errText}. Return JSON with key "message" as a string.` }
+                                    })
+                                });
+                                const errData = await errRes.json();
+                                throw new Error(errData.message || errText);
+                            } catch (e2) {
+                                throw new Error(`Service temporarily unavailable. Please try again in a moment. Details: ${errText}`);
+                            }
+                        }
+                        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                        continue;
+                    }
+                    const data = await res.json();
+                    const elapsed = Date.now() - start;
+                    totalAITime += elapsed;
+                    if (!aliasTimings[alias]) aliasTimings[alias] = 0;
+                    aliasTimings[alias] += elapsed;
+                    if (data.input_tokens) totalAIInputTokens += data.input_tokens;
+                    if (data.output_tokens) totalAIOutputTokens += data.output_tokens;
+                    return data;
+                } catch (err) {
+                    if (attempt === retries - 1) throw err;
+                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                }
+            }
+        }
+
+        // ---- Profile Management ----
+        function populateOnboarding() {
+            const profile = getProfile();
+            if (!profile) return;
+            document.getElementById('inp-name').value = profile.name || '';
+            document.getElementById('inp-age').value = profile.age || '';
+            document.getElementById('inp-weight').value = profile.weight || '';
+            document.getElementById('inp-iddsi').value = profile.iddsi || '';
+            document.getElementById('inp-fluid').value = profile.fluid || '';
+            document.getElementById('inp-dentition').value = profile.dentition || '';
+            document.getElementById('inp-culture').value = profile.culture || 'american';
+            document.getElementById('inp-allergies').value = profile.allergies || '';
+            document.getElementById('inp-calories').value = profile.calories || '';
+            document.getElementById('inp-nutrition-needs').value = profile.nutritionNeeds || '';
+            document.querySelectorAll('.equip-check').forEach(cb => {
+                cb.checked = (profile.equipment || []).includes(cb.value);
+            });
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('inp-name').value.trim();
+            const age = document.getElementById('inp-age').value;
+            const weight = document.getElementById('inp-weight').value;
+            const iddsi = document.getElementById('inp-iddsi').value;
+            const fluid = document.getElementById('inp-fluid').value;
+            const dentition = document.getElementById('inp-dentition').value;
+            const culture = document.getElementById('inp-culture').value;
+            const allergies = document.getElementById('inp-allergies').value.trim();
+            const calories = document.getElementById('inp-calories').value;
+            const nutritionNeeds = document.getElementById('inp-nutrition-needs').value.trim();
+            const equipment = Array.from(document.querySelectorAll('.equip-check:checked')).map(cb => cb.value);
+
+            if (!name) { showToast('Please enter a name'); return; }
+            if (!iddsi) { showToast('Please select your IDDSI texture level'); return; }
+            if (!fluid) { showToast('Please select a fluid thickness level'); return; }
+
+            const profile = { name, age, weight, iddsi, fluid, dentition, culture, allergies, calories, nutritionNeeds, equipment, createdAt: new Date().toISOString() };
+            localStorage.setItem('dyspha_profile', JSON.stringify(profile));
+            showToast('✅ Profile saved!');
+            showView('dashboard');
+        }
+
+        function updateDashboard() {
+            const profile = getProfile();
+            if (!profile) return;
+            document.getElementById('dash-name').textContent = profile.name;
+            document.getElementById('dash-level').textContent = profile.iddsi;
+            document.getElementById('dash-cal').textContent = profile.calories || '~1800';
+
+            const plans = getMealPlans();
+            const today = new Date().toDateString();
+            const todayPlan = plans.find(p => new Date(p.date).toDateString() === today);
+
+            if (todayPlan) {
+                document.getElementById('current-plan-section').classList.remove('hidden');
+                renderPlanCards(todayPlan, 'current-plan-cards');
+                renderNutritionBars(todayPlan);
+            } else {
+                document.getElementById('current-plan-section').classList.add('hidden');
+            }
+        }
+
+        function renderNutritionBars(plan) {
+            const profile = getProfile();
+            const targetCal = parseInt(profile.calories) || 1800;
+            const container = document.getElementById('nutrition-bars');
+
+            if (!plan || !plan.totalNutrients) {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic">Generate a meal plan to see your daily nutrition breakdown</p>';
+                return;
+            }
+
+            const n = plan.totalNutrients;
+            const nutrients = [
+                { name: 'Calories', value: n.calories || 0, target: targetCal, unit: 'kcal', color: 'bg-brand-500' },
+                { name: 'Protein', value: n.protein || 0, target: n.proteinTarget || 65, unit: 'g', color: 'bg-calm-500' },
+                { name: 'Fiber', value: n.fiber || 0, target: n.fiberTarget || 25, unit: 'g', color: 'bg-warm-500' },
+                { name: 'Calcium', value: n.calcium || 0, target: 1200, unit: 'mg', color: 'bg-purple-500' },
+                { name: 'Iron', value: n.iron || 0, target: 8, unit: 'mg', color: 'bg-red-400' },
+                { name: 'Vitamin D', value: n.vitaminD || 0, target: 20, unit: 'mcg', color: 'bg-yellow-500' },
+            ];
+
+            container.innerHTML = nutrients.map(nu => {
+                const pct = Math.min(100, Math.round((nu.value / nu.target) * 100));
+                return `
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="font-medium text-gray-700">${nu.name}</span>
+                            <span class="text-gray-500">${nu.value}/${nu.target} ${nu.unit} (${pct}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="${nu.color} h-2 rounded-full nutrient-bar" style="width: ${pct}%"></div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // ---- Meal Plan Generation ----
+        async function generateMealPlan() {
+            const profile = getProfile();
+            if (!profile) { showView('onboarding'); return; }
+
+            showLoading('Creating Your Meal Plan', 'Our AI nutritionist is crafting safe, delicious meals tailored to you');
+
+            const ratings = getRatings();
+            const likedRecipes = Object.entries(ratings).filter(([k, v]) => v >= 4).map(([k]) => k).slice(0, 5);
+            const dislikedRecipes = Object.entries(ratings).filter(([k, v]) => v <= 2).map(([k]) => k).slice(0, 5);
+
+            const prompt = `You are a clinical dietitian specializing in dysphagia nutrition. Generate a complete one-day meal plan for a senior patient with the following profile:
+
+- Name: ${profile.name}
+- Age: ${profile.age || 'unknown'}
+- Weight: ${profile.weight || 'unknown'} lbs
+- IDDSI Food Texture Level: ${profile.iddsi} (${getIDDSILabel(profile.iddsi)})
+- IDDSI Fluid Thickness Level: ${profile.fluid} (${getFluidLabel(profile.fluid)})
+- Dentition: ${profile.dentition || 'unknown'}
+- Cultural Food Preference: ${profile.culture}
+- Allergies/Restrictions: ${profile.allergies || 'none'}
+- Target Daily Calories: ${profile.calories || '1800'} kcal
+- Special Nutrition Needs: ${profile.nutritionNeeds || 'general senior nutrition'}
+- Available Kitchen Equipment: ${profile.equipment.join(', ') || 'basic kitchen'}
+${likedRecipes.length ? '- Previously liked recipes (give similar): ' + likedRecipes.join(', ') : ''}
+${dislikedRecipes.length ? '- Previously disliked recipes (avoid similar): ' + dislikedRecipes.join(', ') : ''}
+
+Requirements:
+1. Generate exactly 5 meals: breakfast, morning_snack, lunch, afternoon_snack, dinner
+2. Every recipe MUST be safe for IDDSI Level ${profile.iddsi}
+3. Include fortification instructions (e.g., protein powder, cream, butter) to maximize nutrient density
+4. Include specific blender/processing instructions appropriate for the texture level
+5. Recipes should be practical, affordable, and culturally appropriate
+6. Ensure adequate protein (min 1.0g/kg body weight), calcium, vitamin D, iron, fiber
+7. Include thickener instructions for beverages if fluid thickness > 0
+
+Return EXACTLY this JSON structure (no markdown, no extra text):
+{
+  "meals": [
+    {
+      "id": "string (unique recipe ID like 'breakfast_oatmeal_20240101')",
+      "mealType": "string (one of: breakfast, morning_snack, lunch, afternoon_snack, dinner)",
+      "name": "string (appetizing recipe name)",
+      "description": "string (1-2 sentence appetizing description)",
+      "prepTime": "string (e.g., '15 minutes')",
+      "iddsiLevel": number (3-7),
+      "servings": number,
+      "ingredients": [
+        { "item": "string", "amount": "string", "note": "string or empty" }
+      ],
+      "steps": ["string (each step is a clear instruction)"],
+      "fortificationTips": ["string (optional tips to boost nutrition)"],
+      "blenderInstructions": "string (specific texture modification instructions or empty if not needed)",
+      "beverageNote": "string (thickener instructions if needed, empty if thin fluids are safe)",
+      "nutrients": {
+        "calories": number,
+        "protein": number,
+        "carbs": number,
+        "fat": number,
+        "fiber": number,
+        "calcium": number,
+        "iron": number,
+        "vitaminD": number,
+        "sodium": number
+      },
+      "safetyNotes": ["string (any swallowing safety reminders)"],
+      "emoji": "string (single food emoji)"
+    }
+  ],
+  "totalNutrients": {
+    "calories": number,
+    "protein": number,
+    "proteinTarget": number,
+    "carbs": number,
+    "fat": number,
+    "fiber": number,
+    "fiberTarget": number,
+    "calcium": number,
+    "iron": number,
+    "vitaminD": number,
+    "sodium": number
+  },
+  "dailyNotes": "string (clinical notes about the day's nutrition, any concerns)",
+  "groceryList": [
+    { "item": "string", "amount": "string", "category": "string (produce, dairy, protein, pantry, frozen, other)" }
+  ]
+}`;
+
+            try {
+                const result = await callAI(prompt);
+                const plan = {
+                    ...result,
+                    date: new Date().toISOString(),
+                    profileSnapshot: { ...profile }
+                };
+
+                const plans = getMealPlans();
+                plans.unshift(plan);
+                if (plans.length > 30) plans.pop();
+                saveMealPlans(plans);
+
+                hideLoading();
+                renderMealPlan(plan);
+                showView('mealplan');
+                showToast('🎉 Meal plan created!');
+            } catch (err) {
+                hideLoading();
+                showToast('❌ ' + err.message, 5000);
+            }
+        }
+
+        async function generateSingleRecipe() {
+            const profile = getProfile();
+            if (!profile) { showView('onboarding'); return; }
+
+            const mealType = prompt('What type of meal?\n\n1. Breakfast\n2. Lunch\n3. Dinner\n4. Snack\n5. Dessert\n\nEnter name or number:');
+            if (!mealType) return;
+
+            const mealMap = { '1': 'breakfast', '2': 'lunch', '3': 'dinner', '4': 'snack', '5': 'dessert' };
+            const meal = mealMap[mealType] || mealType.toLowerCase();
+
+            showLoading('Creating Recipe', `Finding the perfect ${meal} for you`);
+
+            const aiPrompt = `You are a clinical dietitian specializing in dysphagia nutrition. Generate a single ${meal} recipe for:
+- IDDSI Level: ${profile.iddsi} (${getIDDSILabel(profile.iddsi)})
+- Fluid Thickness: ${profile.fluid} (${getFluidLabel(profile.fluid)})
+- Dentition: ${profile.dentition || 'unknown'}
+- Culture: ${profile.culture}
+- Allergies: ${profile.allergies || 'none'}
+- Equipment: ${profile.equipment.join(', ') || 'basic kitchen'}
+- Special needs: ${profile.nutritionNeeds || 'none'}
+
+Return EXACTLY this JSON:
+{
+  "id": "string (unique recipe ID)",
+  "mealType": "string",
+  "name": "string",
+  "description": "string",
+  "prepTime": "string",
+  "iddsiLevel": number,
+  "servings": number,
+  "ingredients": [{ "item": "string", "amount": "string", "note": "string" }],
+  "steps": ["string"],
+  "fortificationTips": ["string"],
+  "blenderInstructions": "string",
+  "beverageNote": "string",
+  "nutrients": { "calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number, "calcium": number, "iron": number, "vitaminD": number, "sodium": number },
+  "safetyNotes": ["string"],
+  "emoji": "string"
+}`;
+
+            try {
+                const recipe = await callAI(aiPrompt);
+                hideLoading();
+                renderRecipeDetail(recipe);
+                lastViewBeforeRecipe = 'dashboard';
+                showView('recipe');
+            } catch (err) {
+                hideLoading();
+                showToast('❌ ' + err.message, 5000);
+            }
+        }
+
+        // ---- Rendering ----
+        function renderMealPlan(plan) {
+            const container = document.getElementById('mealplan-content');
+            const mealOrder = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner'];
+            const mealLabels = {
+                breakfast: '🌅 Breakfast',
+                morning_snack: '🍎 Morning Snack',
+                lunch: '☀️ Lunch',
+                afternoon_snack: '🍵 Afternoon Snack',
+                dinner: '🌙 Dinner'
+            };
+
+            const meals = plan.meals || [];
+            const sorted = meals.sort((a, b) => mealOrder.indexOf(a.mealType) - mealOrder.indexOf(b.mealType));
+
+            let html = `
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Today's Meal Plan</h2>
+                    <span class="text-xs bg-brand-100 text-brand-700 px-2 py-1 rounded-full font-medium">IDDSI ${plan.profileSnapshot?.iddsi || '?'}</span>
+                </div>
+            `;
+
+            // Nutrition overview
+            if (plan.totalNutrients) {
+                const n = plan.totalNutrients;
+                html += `
+                    <div class="bg-gradient-to-r from-brand-50 to-calm-50 rounded-xl p-3 mb-4 border border-brand-100">
+                        <div class="grid grid-cols-4 gap-2 text-center">
+                            <div><div class="text-lg font-bold text-brand-700">${n.calories}</div><div class="text-xs text-gray-500">kcal</div></div>
+                            <div><div class="text-lg font-bold text-calm-600">${n.protein}g</div><div class="text-xs text-gray-500">Protein</div></div>
+                            <div><div class="text-lg font-bold text-warm-500">${n.fiber}g</div><div class="text-xs text-gray-500">Fiber</div></div>
+                            <div><div class="text-lg font-bold text-purple-600">${n.calcium}mg</div><div class="text-xs text-gray-500">Calcium</div></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Daily notes
+            if (plan.dailyNotes) {
+                html += `
+                    <div class="bg-warm-50 border border-warm-200 rounded-xl p-3 mb-4">
+                        <p class="text-sm text-warm-800">📝 <strong>Clinical Note:</strong> ${plan.dailyNotes}</p>
+                    </div>
+                `;
+            }
+
+            // Meal cards
+            sorted.forEach((meal, idx) => {
+                html += `
+                    <div class="bg-white rounded-xl card-shadow mb-3 overflow-hidden recipe-card cursor-pointer" onclick='showRecipeFromPlan(${JSON.stringify(meal).replace(/'/g, "&#39;")})'>
+                        <div class="p-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="text-xs font-medium text-brand-600 uppercase tracking-wide mb-1">${mealLabels[meal.mealType] || meal.mealType}</div>
+                                    <h3 class="font-bold text-gray-800 text-base">${meal.emoji || '🍽️'} ${meal.name}</h3>
+                                    <p class="text-sm text-gray-500 mt-1">${meal.description}</p>
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="text-xs text-gray-500">⏱ ${meal.prepTime}</span>
+                                        <span class="text-xs text-gray-500">🔥 ${meal.nutrients?.calories || '?'} kcal</span>
+                                        <span class="text-xs text-gray-500">💪 ${meal.nutrients?.protein || '?'}g protein</span>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-300 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Actions
+            html += `
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="showView('grocery')" class="py-3 bg-warm-400 text-white font-bold rounded-xl">🛒 Grocery List</button>
+                    <button onclick="showView('clinician')" class="py-3 bg-calm-500 text-white font-bold rounded-xl">📋 Report</button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            updateDashboard();
+        }
+
+        function showRecipeFromPlan(meal) {
+            renderRecipeDetail(meal);
+            lastViewBeforeRecipe = 'mealplan';
+            showView('recipe');
+        }
+
+        function goBackFromRecipe() {
+            showView(lastViewBeforeRecipe || 'dashboard');
+        }
+
+        function renderRecipeDetail(recipe) {
+            const container = document.getElementById('recipe-content');
+            const ratings = getRatings();
+            const currentRating = ratings[recipe.id] || 0;
+
+            let html = `
+                <div class="mb-4">
+                    <span class="text-xs font-medium text-brand-600 uppercase tracking-wide">${recipe.mealType}</span>
+                    <h2 class="text-2xl font-bold text-gray-800 mt-1">${recipe.emoji || '🍽️'} ${recipe.name}</h2>
+                    <p class="text-gray-600 mt-1">${recipe.description}</p>
+                    <div class="flex items-center gap-4 mt-3">
+                        <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">⏱ ${recipe.prepTime}</span>
+                        <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">👥 ${recipe.servings} serving${recipe.servings > 1 ? 's' : ''}</span>
+                        <span class="text-sm text-gray-500 bg-brand-100 text-brand-700 px-3 py-1 rounded-full font-medium">IDDSI ${recipe.iddsiLevel}</span>
+                    </div>
+                </div>
+
+                <!-- Safety Notes -->
+                ${recipe.safetyNotes && recipe.safetyNotes.length ? `
+                <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
+                    <h4 class="font-bold text-red-700 text-sm mb-1">⚠️ Safety Reminders</h4>
+                    <ul class="text-sm text-red-600 space-y-1">
+                        ${recipe.safetyNotes.map(n => `<li>• ${n}</li>`).join('')}
+                    </ul>
+                </div>` : ''}
+
+                <!-- Nutrition -->
+                <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3">📊 Nutrition per Serving</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        ${Object.entries(recipe.nutrients || {}).map(([key, val]) => `
+                            <div class="text-center p-2 bg-gray-50 rounded-lg">
+                                <div class="font-bold text-gray-800">${val}</div>
+                                <div class="text-xs text-gray-500">${key}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Ingredients -->
+                <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3">🥘 Ingredients</h3>
+                    <ul class="space-y-2">
+                        ${(recipe.ingredients || []).map(ing => `
+                            <li class="flex items-start gap-2 text-sm">
+                                <span class="w-5 h-5 bg-brand-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">✓</span>
+                                <span><strong>${ing.amount}</strong> ${ing.item} ${ing.note ? `<span class="text-gray-400">(${ing.note})</span>` : ''}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+
+                <!-- Steps -->
+                <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3">👩‍🍳 Preparation Steps</h3>
+                    <ol class="space-y-3">
+                        ${(recipe.steps || []).map((step, i) => `
+                            <li class="flex gap-3 text-sm">
+                                <span class="w-7 h-7 bg-brand-500 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">${i + 1}</span>
+                                <span class="text-gray-700 leading-relaxed pt-0.5">${step}</span>
+                            </li>
+                        `).join('')}
+                    </ol>
+                </div>
+
+                <!-- Blender Instructions -->
+                ${recipe.blenderInstructions ? `
+                <div class="bg-calm-50 border border-calm-200 rounded-xl p-4 mb-4">
+                    <h3 class="font-bold text-calm-700 mb-2">🔄 Texture Modification</h3>
+                    <p class="text-sm text-calm-800">${recipe.blenderInstructions}</p>
+                </div>` : ''}
+
+                <!-- Beverage Note -->
+                ${recipe.beverageNote ? `
+                <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+                    <h3 class="font-bold text-purple-700 mb-2">🥤 Beverage Thickening</h3>
+                    <p class="text-sm text-purple-800">${recipe.beverageNote}</p>
+                </div>` : ''}
+
+                <!-- Fortification Tips -->
+                ${recipe.fortificationTips && recipe.fortificationTips.length ? `
+                <div class="bg-warm-50 border border-warm-200 rounded-xl p-4 mb-4">
+                    <h3 class="font-bold text-warm-700 mb-2">💪 Fortification Tips</h3>
+                    <ul class="text-sm text-warm-800 space-y-1">
+                        ${recipe.fortificationTips.map(t => `<li>• ${t}</li>`).join('')}
+                    </ul>
+                </div>` : ''}
+
+                <!-- Rating -->
+                <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-2">⭐ Rate This Recipe</h3>
+                    <p class="text-sm text-gray-500 mb-3">Your rating helps us suggest better meals</p>
+                    <div class="flex gap-2">
+                        ${[1,2,3,4,5].map(star => `
+                            <button onclick="rateRecipe('${recipe.id}', ${star})" class="w-12 h-12 rounded-xl text-2xl transition active:scale-90 ${currentRating >= star ? 'bg-warm-100 border-2 border-warm-400' : 'bg-gray-100 border-2 border-gray-200'}">${currentRating >= star ? '⭐' : '☆'}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function rateRecipe(id, rating) {
+            saveRating(id, rating);
+            showToast(`⭐ Rated ${rating}/5! We'll learn from your preferences.`);
+            // Re-render to update stars
+            const plans = getMealPlans();
+            for (const plan of plans) {
+                const meal = (plan.meals || []).find(m => m.id === id);
+                if (meal) {
+                    renderRecipeDetail(meal);
+                    return;
+                }
+            }
+        }
+
+        function renderPlanCards(plan, containerId) {
+            const container = document.getElementById(containerId);
+            const mealOrder = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner'];
+            const meals = (plan.meals || []).sort((a, b) => mealOrder.indexOf(a.mealType) - mealOrder.indexOf(b.mealType));
+
+            container.innerHTML = meals.map(meal => `
+                <div class="bg-white rounded-xl card-shadow p-3 recipe-card cursor-pointer" onclick='showRecipeFromPlan(${JSON.stringify(meal).replace(/'/g, "&#39;")})'>
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">${meal.emoji || '🍽️'}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs text-brand-600 font-medium">${meal.mealType.replace('_', ' ')}</div>
+                            <div class="font-semibold text-gray-800 text-sm truncate">${meal.name}</div>
+                        </div>
+                        <div class="text-xs text-gray-500">${meal.nutrients?.calories || '?'} kcal</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ---- Grocery List ----
+        function renderGroceryList() {
+            const plans = getMealPlans();
+            const container = document.getElementById('grocery-content');
+
+            if (!plans.length || !plans[0].groceryList) {
+                container.innerHTML = '<p class="text-gray-500 italic text-center py-8">Generate a meal plan first to create a grocery list 🛒</p>';
+                return;
+            }
+
+            const plan = plans[0];
+            const categories = {};
+            (plan.groceryList || []).forEach(item => {
+                const cat = item.category || 'other';
+                if (!categories[cat]) categories[cat] = [];
+                categories[cat].push(item);
+            });
+
+            const catEmojis = {
+                produce: '🥬', dairy: '🥛', protein: '🥩', pantry: '🫙', frozen: '🧊', other: '📦',
+                grains: '🌾', condiments: '🧂', beverages: '🥤'
+            };
+
+            let html = `<div class="bg-brand-50 border border-brand-200 rounded-xl p-3 mb-4">
+                <p class="text-sm text-brand-800">📋 Based on your most recent meal plan from ${new Date(plan.date).toLocaleDateString()}</p>
+            </div>`;
+
+            Object.entries(categories).forEach(([cat, items]) => {
+                html += `
+                    <div class="mb-4">
+                        <h3 class="font-bold text-gray-800 mb-2 capitalize">${catEmojis[cat] || '📦'} ${cat}</h3>
+                        <div class="bg-white rounded-xl card-shadow divide-y divide-gray-100">
+                            ${items.map(item => `
+                                <label class="flex items-center gap-3 p-3 cursor-pointer">
+                                    <input type="checkbox" class="w-5 h-5 text-brand-500 rounded">
+                                    <span class="flex-1 text-sm text-gray-800">${item.item}</span>
+                                    <span class="text-xs text-gray-500">${item.amount}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ---- History ----
+        function renderHistory() {
+            const plans = getMealPlans();
+            const container = document.getElementById('history-content');
+
+            if (!plans.length) {
+                container.innerHTML = '<p class="text-gray-500 italic text-center py-8">No saved meal plans yet. Generate your first one! 🍽️</p>';
+                return;
+            }
+
+            container.innerHTML = plans.map((plan, idx) => `
+                <div class="bg-white rounded-xl card-shadow mb-3 p-4 cursor-pointer recipe-card" onclick="viewHistoryPlan(${idx})">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-gray-800">${new Date(plan.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</div>
+                            <div class="text-sm text-gray-500 mt-1">
+                                ${(plan.meals || []).length} meals • ${plan.totalNutrients?.calories || '?'} kcal • IDDSI ${plan.profileSnapshot?.iddsi || '?'}
+                            </div>
+                            <div class="text-xs text-gray-400 mt-1">
+                                ${(plan.meals || []).map(m => m.emoji || '🍽️').join(' ')}
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewHistoryPlan(idx) {
+            const plans = getMealPlans();
+            if (plans[idx]) {
+                renderMealPlan(plans[idx]);
+                showView('mealplan');
+            }
+        }
+
+        // ---- Clinician Report ----
+        async function renderClinicianReport() {
+            const profile = getProfile();
+            const plans = getMealPlans();
+            const ratings = getRatings();
+            const container = document.getElementById('clinician-content');
+
+            if (!profile) {
+                container.innerHTML = '<p class="text-gray-500 italic text-center py-8">Please complete your profile first</p>';
+                return;
+            }
+
+            const recentPlans = plans.slice(0, 7);
+            const ratedRecipes = Object.entries(ratings);
+            const liked = ratedRecipes.filter(([k, v]) => v >= 4).length;
+            const disliked = ratedRecipes.filter(([k, v]) => v <= 2).length;
+
+            // Calculate averages
+            let avgCal = 0, avgProtein = 0, avgFiber = 0;
+            if (recentPlans.length) {
+                recentPlans.forEach(p => {
+                    if (p.totalNutrients) {
+                        avgCal += p.totalNutrients.calories || 0;
+                        avgProtein += p.totalNutrients.protein || 0;
+                        avgFiber += p.totalNutrients.fiber || 0;
+                    }
+                });
+                avgCal = Math.round(avgCal / recentPlans.length);
+                avgProtein = Math.round(avgProtein / recentPlans.length);
+                avgFiber = Math.round(avgFiber / recentPlans.length);
+            }
+
+            let html = `
+                <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3">👤 Patient Profile</h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="bg-gray-50 p-2 rounded-lg"><span class="text-gray-500">Name:</span> <strong>${profile.name}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded-lg"><span class="text-gray-500">Age:</span> <strong>${profile.age || '-'}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded-lg"><span class="text-gray-500">Weight:</span> <strong>${profile.weight || '-'} lbs</strong></div>
+                        <div class="bg-gray-50 p-2 rounded-lg"><span class="text-gray-500">IDDSI Food:</span> <strong>Level ${profile.iddsi}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded-lg"><span class="text-gray-500">Fluid:</span> <strong>${getFluidLabel(profile.fluid)}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded-lg"><span class="text-gray-500">Dentition:</span> <strong>${profile.dentition || '-'}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded-lg col-span-2"><span class="text-gray-500">Allergies:</span> <strong>${profile.allergies || 'None'}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded-lg col-span-2"><span class="text-gray-500">Special Needs:</span> <strong>${profile.nutritionNeeds || 'None specified'}</strong></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3">📊 7-Day Nutrition Averages</h3>
+                    ${recentPlans.length ? `
+                        <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="bg-brand-50 p-3 rounded-xl">
+                                <div class="text-2xl font-bold text-brand-700">${avgCal}</div>
+                                <div class="text-xs text-gray-500">Avg kcal/day</div>
+                            </div>
+                            <div class="bg-calm-50 p-3 rounded-xl">
+                                <div class="text-2xl font-bold text-calm-600">${avgProtein}g</div>
+                                <div class="text-xs text-gray-500">Avg Protein</div>
+                            </div>
+                            <div class="bg-warm-50 p-3 rounded-xl">
+                                <div class="text-2xl font-bold text-warm-600">${avgFiber}g</div>
+                                <div class="text-xs text-gray-500">Avg Fiber</div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Based on ${recentPlans.length} meal plan(s)</p>
+                    ` : '<p class="text-sm text-gray-500 italic">No meal plans generated yet</p>'}
+                </div>
+
+                <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3">😊 Acceptance Patterns</h3>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-gray-50 p-3 rounded-xl">
+                            <div class="text-2xl font-bold text-gray-800">${ratedRecipes.length}</div>
+                            <div class="text-xs text-gray-500">Rated</div>
+                        </div>
+                        <div class="bg-green-50 p-3 rounded-xl">
+                            <div class="text-2xl font-bold text-green-600">${liked}</div>
+                            <div class="text-xs text-gray-500">Liked (4-5⭐)</div>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-xl">
+                            <div class="text-2xl font-bold text-red-500">${disliked}</div>
+                            <div class="text-xs text-gray-500">Disliked (1-2⭐)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3">📝 Recent Meal Plans</h3>
+                    ${recentPlans.length ? recentPlans.map(p => `
+                        <div class="border-b border-gray-100 py-2 last:border-0">
+                            <div class="flex justify-between text-sm">
+                                <span class="font-medium text-gray-700">${new Date(p.date).toLocaleDateString()}</span>
+                                <span class="text-gray-500">${p.totalNutrients?.calories || '?'} kcal | ${p.totalNutrients?.protein || '?'}g protein</span>
+                            </div>
+                            ${p.dailyNotes ? `<p class="text-xs text-gray-500 mt-1">${p.dailyNotes}</p>` : ''}
+                        </div>
+                    `).join('') : '<p class="text-sm text-gray-500 italic">No data yet</p>'}
+                </div>
+
+                <p class="text-xs text-gray-400 text-center">Report generated ${new Date().toLocaleString()}</p>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ---- Data Management ----
+        function clearAllData() {
+            if (confirm('Are you sure? This will delete all your data including profile, meal plans, and ratings.')) {
+                localStorage.removeItem('dyspha_profile');
+                localStorage.removeItem('dyspha_plans');
+                localStorage.removeItem('dyspha_ratings');
+                showToast('🗑️ All data cleared');
+                showView('onboarding');
+            }
+        }
+
+        // ---- Initialization ----
+        (function init() {
+            const profile = getProfile();
+            if (profile && profile.name && profile.iddsi) {
+                showView('dashboard');
+            } else {
+                showView('onboarding');
+            }
+        })();
+    </script>
+</body>
+</html>
